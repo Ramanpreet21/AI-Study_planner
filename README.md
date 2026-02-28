@@ -1,0 +1,176 @@
+# Adaptive AI Study Planner
+
+A browser-based study planning system that generates optimised daily 
+schedules, detects burnout patterns, and adapts to your actual 
+performance — not assumed ideal conditions.
+
+Built with Python, Streamlit, and the Hugging Face Inference API.
+
+---
+
+## What it does
+
+Most study planners assume you will complete everything you schedule.
+This one does not.
+
+The system monitors your daily behavioral signals — mood, energy, 
+stress, and sleep — and adjusts your study plan based on what you 
+have actually been completing. If you are consistently over-scheduling, 
+it caps your plan. If your burnout indicators spike, it reduces 
+intensity automatically.
+
+---
+
+## Core Features
+
+**Adaptive Plan Generator**  
+Generates daily schedules weighted by exam proximity and subject 
+difficulty. Applies a conservative 80% buffer during the first 7 days, 
+then switches to data-driven caps based on your real completion history.
+
+**Burnout Detection**  
+Composite Z-score model weighted across stress (30%), mood (25%), 
+energy (20%), sleep (15%), and task completion (10%). All signals are 
+normalised against your personal 14-day rolling baseline — not a 
+population average. Four risk levels: Low, Watch, Elevated, High.
+
+**Reality Check Engine**  
+Tracks your 7-day rolling task completion rate and automatically caps 
+requested hours when the rate drops. Prevents the cycle of 
+over-scheduling and under-completing.
+
+**Correlation Insights**  
+Spearman rank correlation analysis between your behavioral signals and 
+productivity. Surfaces patterns only after 14+ days of data and only 
+when p < 0.10. All insights use strictly observational language — no 
+causal claims are ever made.
+
+**Emergency Mode**  
+One-click day cancellation with a 15-minute grounding protocol. 
+Automatically redistributes deferred tasks to future days while 
+respecting exam deadlines.
+
+**AI Assistant**  
+Powered by google/flan-t5-base via the Hugging Face Inference API. 
+Generates natural language explanations of your study plan and 
+AI-ranked subject prioritization advice based on exam proximity, 
+difficulty, and current burnout level.
+
+---
+
+## Architecture
+
+The system is built on three core engineering principles:
+
+**Feedback Loop Separation**  
+Plan generation (Pipeline A) and performance evaluation (Pipeline B) 
+are physically separated modules with no shared imports. The only 
+permitted bridge is a single hours-cap value passed through 
+`feedback_splitter.py`. This prevents the system from generating 
+progressively easier plans and mistaking that for improvement.
+
+**Cold Start Handling**  
+A Phase Manager gates every adaptive feature behind data thresholds. 
+No feature activates on empty data. The system is explicit about what 
+it does not know yet.
+```
+Days 1–7   → Cold Start    — fixed 80% buffer, no adaptive features
+Days 8–14  → Bootstrapping — Reality Check and burnout scorer active
+Day 15+    → Adaptive      — all features including insights active
+```
+
+**Correlation Honesty**  
+The insights engine is architecturally restricted from producing causal 
+language. Every insight includes the correlation coefficient, p-value, 
+sample size, and a mandatory confounder note. The system never 
+recommends behavioral changes.
+
+---
+
+## Tech Stack
+
+| Layer      | Technology                              |
+|------------|-----------------------------------------|
+| Frontend   | Streamlit                               |
+| Backend    | Python                                  |
+| Database   | SQLite                                  |
+| Analysis   | Pandas, SciPy (Spearman correlation)    |
+| AI         | Hugging Face Inference API (flan-t5-base)|
+
+---
+
+## Project Structure
+```
+study_planner/
+├── app.py
+├── pages/
+│   ├── 1_daily_checkin.py
+│   ├── 2_study_plan.py
+│   ├── 3_burnout_dashboard.py
+│   ├── 4_end_of_day.py
+│   ├── 5_insights.py
+│   ├── 5_emergency.py
+│   └── 6_ai_assistant.py
+├── engines/
+│   ├── plan_generator.py       # Pipeline A
+│   ├── evaluator.py            # Pipeline B
+│   ├── burnout_scorer.py
+│   ├── insights_engine.py
+│   ├── phase_manager.py
+│   ├── feedback_splitter.py
+│   ├── task_redistributor.py
+│   ├── ai_engine.py
+│   └── ai_cache.py
+├── database/
+│   ├── schema.sql
+│   └── db_manager.py
+└── data/
+    └── backups/
+```
+
+---
+
+## Setup
+
+**1. Clone the repository**
+```bash
+git clone https://github.com/your-username/study-planner.git
+cd study-planner
+```
+
+**2. Install dependencies**
+```bash
+pip install streamlit pandas scipy python-dotenv requests
+```
+
+**3. Add your Hugging Face API key**
+
+Create a file called `api_key.env` in the project root:
+```
+HF_API_KEY=hf_your_token_here
+```
+Get a free key at huggingface.co/settings/tokens
+
+**4. Run**
+```bash
+streamlit run app.py
+```
+
+The database initialises automatically on first run.
+
+---
+
+## Important Notes
+
+- This system monitors study patterns only. It does not assess or 
+  respond to clinical need.
+- AI responses are generated by flan-t5-base and may be inaccurate. 
+  They are informational only.
+- If you are experiencing persistent distress, please contact a 
+  counsellor or support service.
+
+---
+
+## License
+
+MIT
