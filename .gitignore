@@ -1,0 +1,6 @@
+api_key.env
+database/study_planner.db
+data/ai_cache.json
+__pycache__/
+*.pyc
+.env
