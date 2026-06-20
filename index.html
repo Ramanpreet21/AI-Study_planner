@@ -1,0 +1,1354 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Adaptive AI Study Planner — Smart Scheduling That Learns From You</title>
+  <meta name="description" content="An AI-powered study planning system that generates optimised daily schedules, detects burnout patterns, and adapts to your actual performance. Built with Python, Streamlit &amp; Hugging Face.">
+  <meta name="keywords" content="AI study planner, adaptive learning, burnout detection, study scheduler, Streamlit, Hugging Face, productivity">
+  <meta name="author" content="Ramanpreet21">
+  <meta property="og:title" content="Adaptive AI Study Planner">
+  <meta property="og:description" content="Smart scheduling that detects burnout and adapts to your real performance.">
+  <meta property="og:type" content="website">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎓</text></svg>">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <style>
+    /* ═══════════════════════════════════════════════════════
+       RESET & FOUNDATIONS
+       ═══════════════════════════════════════════════════════ */
+    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+    :root {
+      --bg-primary: #06080c;
+      --bg-secondary: #0b0f16;
+      --bg-card: #0e1219;
+      --bg-card-hover: #121820;
+      --border-subtle: rgba(255, 255, 255, 0.05);
+      --border-accent: rgba(96, 165, 250, 0.15);
+      --text-primary: #e8ecf1;
+      --text-secondary: #8b95a5;
+      --text-muted: #566074;
+      --accent-blue: #60a5fa;
+      --accent-cyan: #22d3ee;
+      --accent-violet: #a78bfa;
+      --accent-rose: #fb7185;
+      --accent-amber: #fbbf24;
+      --accent-emerald: #34d399;
+      --gradient-hero: linear-gradient(135deg, #60a5fa 0%, #a78bfa 50%, #fb7185 100%);
+      --gradient-card: linear-gradient(135deg, rgba(96,165,250,0.08) 0%, rgba(167,139,250,0.04) 100%);
+      --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      --font-mono: 'JetBrains Mono', 'Fira Code', monospace;
+      --radius-sm: 8px;
+      --radius-md: 12px;
+      --radius-lg: 20px;
+      --radius-xl: 28px;
+    }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      font-family: var(--font-sans);
+      background: var(--bg-primary);
+      color: var(--text-primary);
+      line-height: 1.7;
+      overflow-x: hidden;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+    }
+
+    /* ═══════════════════════════════════════════════════════
+       BACKGROUND EFFECTS
+       ═══════════════════════════════════════════════════════ */
+    body::before {
+      content: '';
+      position: fixed;
+      top: -40%;
+      left: -20%;
+      width: 80vw;
+      height: 80vw;
+      background: radial-gradient(circle, rgba(96,165,250,0.06) 0%, transparent 60%);
+      pointer-events: none;
+      z-index: 0;
+      animation: drift 25s ease-in-out infinite alternate;
+    }
+
+    body::after {
+      content: '';
+      position: fixed;
+      bottom: -30%;
+      right: -20%;
+      width: 70vw;
+      height: 70vw;
+      background: radial-gradient(circle, rgba(167,139,250,0.05) 0%, transparent 60%);
+      pointer-events: none;
+      z-index: 0;
+      animation: drift 20s ease-in-out infinite alternate-reverse;
+    }
+
+    @keyframes drift {
+      0% { transform: translate(0, 0) scale(1); }
+      100% { transform: translate(40px, -30px) scale(1.05); }
+    }
+
+    /* ═══════════════════════════════════════════════════════
+       NAVIGATION
+       ═══════════════════════════════════════════════════════ */
+    .nav {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      z-index: 1000;
+      padding: 1rem 2rem;
+      background: rgba(6, 8, 12, 0.7);
+      backdrop-filter: blur(20px) saturate(1.2);
+      -webkit-backdrop-filter: blur(20px) saturate(1.2);
+      border-bottom: 1px solid var(--border-subtle);
+      transition: background 0.3s ease, box-shadow 0.3s ease;
+    }
+
+    .nav.scrolled {
+      background: rgba(6, 8, 12, 0.92);
+      box-shadow: 0 4px 30px rgba(0, 0, 0, 0.4);
+    }
+
+    .nav-inner {
+      max-width: 1200px;
+      margin: 0 auto;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .nav-logo {
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+      font-weight: 700;
+      font-size: 1.1rem;
+      color: var(--text-primary);
+      text-decoration: none;
+    }
+
+    .nav-logo span {
+      font-size: 1.4rem;
+    }
+
+    .nav-links {
+      display: flex;
+      gap: 0.4rem;
+      list-style: none;
+    }
+
+    .nav-links a {
+      color: var(--text-secondary);
+      text-decoration: none;
+      font-size: 0.88rem;
+      font-weight: 500;
+      padding: 0.5rem 1rem;
+      border-radius: var(--radius-sm);
+      transition: color 0.2s, background 0.2s;
+    }
+
+    .nav-links a:hover {
+      color: var(--text-primary);
+      background: rgba(255, 255, 255, 0.04);
+    }
+
+    .nav-cta {
+      background: rgba(96, 165, 250, 0.12) !important;
+      color: var(--accent-blue) !important;
+      border: 1px solid rgba(96, 165, 250, 0.2);
+    }
+
+    .nav-cta:hover {
+      background: rgba(96, 165, 250, 0.22) !important;
+    }
+
+    /* Mobile nav toggle */
+    .nav-toggle {
+      display: none;
+      background: none;
+      border: none;
+      color: var(--text-secondary);
+      font-size: 1.5rem;
+      cursor: pointer;
+      padding: 0.25rem;
+    }
+
+    /* ═══════════════════════════════════════════════════════
+       LAYOUT
+       ═══════════════════════════════════════════════════════ */
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 0 2rem;
+      position: relative;
+      z-index: 1;
+    }
+
+    section {
+      padding: 6rem 0;
+    }
+
+    /* ═══════════════════════════════════════════════════════
+       HERO SECTION
+       ═══════════════════════════════════════════════════════ */
+    .hero {
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      padding-top: 5rem;
+      position: relative;
+    }
+
+    .hero-content {
+      max-width: 800px;
+    }
+
+    .hero-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.4rem 1rem;
+      background: rgba(96, 165, 250, 0.08);
+      border: 1px solid rgba(96, 165, 250, 0.15);
+      border-radius: 100px;
+      font-size: 0.82rem;
+      font-weight: 500;
+      color: var(--accent-blue);
+      margin-bottom: 2rem;
+      animation: fadeInUp 0.8s ease-out 0.2s both;
+    }
+
+    .hero-badge .dot {
+      width: 6px;
+      height: 6px;
+      background: var(--accent-emerald);
+      border-radius: 50%;
+      animation: pulse-dot 2s ease-in-out infinite;
+    }
+
+    @keyframes pulse-dot {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.5; transform: scale(0.8); }
+    }
+
+    .hero h1 {
+      font-size: clamp(2.5rem, 6vw, 4.2rem);
+      font-weight: 800;
+      line-height: 1.1;
+      letter-spacing: -0.03em;
+      margin-bottom: 1.5rem;
+      animation: fadeInUp 0.8s ease-out 0.4s both;
+    }
+
+    .hero h1 .gradient-text {
+      background: var(--gradient-hero);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .hero-subtitle {
+      font-size: 1.15rem;
+      color: var(--text-secondary);
+      line-height: 1.8;
+      max-width: 600px;
+      margin: 0 auto 2.5rem;
+      animation: fadeInUp 0.8s ease-out 0.6s both;
+    }
+
+    .hero-actions {
+      display: flex;
+      gap: 1rem;
+      justify-content: center;
+      flex-wrap: wrap;
+      animation: fadeInUp 0.8s ease-out 0.8s both;
+    }
+
+    @keyframes fadeInUp {
+      from { opacity: 0; transform: translateY(24px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* ═══════════════════════════════════════════════════════
+       BUTTONS
+       ═══════════════════════════════════════════════════════ */
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.85rem 1.8rem;
+      border-radius: var(--radius-md);
+      font-family: var(--font-sans);
+      font-size: 0.92rem;
+      font-weight: 600;
+      text-decoration: none;
+      cursor: pointer;
+      border: none;
+      transition: all 0.25s ease;
+    }
+
+    .btn-primary {
+      background: linear-gradient(135deg, #60a5fa, #818cf8);
+      color: #fff;
+      box-shadow: 0 4px 20px rgba(96, 165, 250, 0.25);
+    }
+
+    .btn-primary:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 30px rgba(96, 165, 250, 0.35);
+    }
+
+    .btn-ghost {
+      background: rgba(255, 255, 255, 0.04);
+      color: var(--text-secondary);
+      border: 1px solid var(--border-subtle);
+    }
+
+    .btn-ghost:hover {
+      background: rgba(255, 255, 255, 0.08);
+      color: var(--text-primary);
+      border-color: rgba(255, 255, 255, 0.12);
+    }
+
+    /* ═══════════════════════════════════════════════════════
+       SECTION HEADERS
+       ═══════════════════════════════════════════════════════ */
+    .section-label {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-size: 0.78rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      color: var(--accent-blue);
+      margin-bottom: 1rem;
+    }
+
+    .section-label::before {
+      content: '';
+      width: 20px;
+      height: 2px;
+      background: var(--accent-blue);
+      border-radius: 2px;
+    }
+
+    .section-title {
+      font-size: clamp(1.8rem, 4vw, 2.6rem);
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      line-height: 1.2;
+      margin-bottom: 1rem;
+    }
+
+    .section-desc {
+      font-size: 1.05rem;
+      color: var(--text-secondary);
+      max-width: 600px;
+      line-height: 1.8;
+    }
+
+    /* ═══════════════════════════════════════════════════════
+       STATS BAR
+       ═══════════════════════════════════════════════════════ */
+    .stats-bar {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 1px;
+      background: var(--border-subtle);
+      border-radius: var(--radius-lg);
+      overflow: hidden;
+      margin-top: -3rem;
+      margin-bottom: 3rem;
+      position: relative;
+      z-index: 2;
+    }
+
+    .stat-item {
+      background: var(--bg-card);
+      padding: 2rem 1.5rem;
+      text-align: center;
+      transition: background 0.3s;
+    }
+
+    .stat-item:hover { background: var(--bg-card-hover); }
+
+    .stat-number {
+      font-size: 1.8rem;
+      font-weight: 800;
+      background: var(--gradient-hero);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      margin-bottom: 0.3rem;
+    }
+
+    .stat-label {
+      font-size: 0.82rem;
+      color: var(--text-muted);
+      font-weight: 500;
+    }
+
+    /* ═══════════════════════════════════════════════════════
+       FEATURE CARDS
+       ═══════════════════════════════════════════════════════ */
+    .features-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 1.25rem;
+      margin-top: 3rem;
+    }
+
+    .feature-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-lg);
+      padding: 2rem;
+      transition: all 0.35s ease;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .feature-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 2px;
+      background: var(--card-accent, var(--gradient-hero));
+      opacity: 0;
+      transition: opacity 0.35s ease;
+    }
+
+    .feature-card:hover {
+      background: var(--bg-card-hover);
+      border-color: rgba(255, 255, 255, 0.08);
+      transform: translateY(-4px);
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+    }
+
+    .feature-card:hover::before { opacity: 1; }
+
+    .feature-icon {
+      width: 48px;
+      height: 48px;
+      border-radius: var(--radius-md);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.4rem;
+      margin-bottom: 1.25rem;
+    }
+
+    .feature-card h3 {
+      font-size: 1.05rem;
+      font-weight: 600;
+      margin-bottom: 0.6rem;
+      color: var(--text-primary);
+    }
+
+    .feature-card p {
+      font-size: 0.88rem;
+      color: var(--text-secondary);
+      line-height: 1.7;
+    }
+
+    /* Feature icon variants */
+    .icon-blue { background: rgba(96, 165, 250, 0.1); }
+    .icon-violet { background: rgba(167, 139, 250, 0.1); }
+    .icon-rose { background: rgba(251, 113, 133, 0.1); }
+    .icon-cyan { background: rgba(34, 211, 238, 0.1); }
+    .icon-amber { background: rgba(251, 191, 36, 0.1); }
+    .icon-emerald { background: rgba(52, 211, 153, 0.1); }
+
+    /* ═══════════════════════════════════════════════════════
+       ARCHITECTURE SECTION
+       ═══════════════════════════════════════════════════════ */
+    .arch-section {
+      background: var(--bg-secondary);
+      border-top: 1px solid var(--border-subtle);
+      border-bottom: 1px solid var(--border-subtle);
+    }
+
+    .arch-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 4rem;
+      align-items: start;
+      margin-top: 3rem;
+    }
+
+    .arch-principle {
+      padding: 1.5rem;
+      border-radius: var(--radius-md);
+      border: 1px solid var(--border-subtle);
+      background: var(--bg-card);
+      margin-bottom: 1.25rem;
+      transition: border-color 0.3s;
+    }
+
+    .arch-principle:hover {
+      border-color: rgba(96, 165, 250, 0.2);
+    }
+
+    .arch-principle h4 {
+      font-size: 0.95rem;
+      font-weight: 600;
+      margin-bottom: 0.5rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .arch-principle p {
+      font-size: 0.85rem;
+      color: var(--text-secondary);
+      line-height: 1.7;
+    }
+
+    .phase-timeline {
+      background: var(--bg-card);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-lg);
+      padding: 2rem;
+    }
+
+    .phase-timeline h4 {
+      font-size: 1rem;
+      font-weight: 600;
+      margin-bottom: 1.5rem;
+      color: var(--text-primary);
+    }
+
+    .phase-step {
+      display: flex;
+      gap: 1rem;
+      padding: 1rem 0;
+      position: relative;
+    }
+
+    .phase-step:not(:last-child) {
+      border-bottom: 1px solid var(--border-subtle);
+    }
+
+    .phase-marker {
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.75rem;
+      font-weight: 700;
+      flex-shrink: 0;
+      font-family: var(--font-mono);
+    }
+
+    .phase-step:nth-child(1) .phase-marker { background: rgba(96,165,250,0.15); color: var(--accent-blue); }
+    .phase-step:nth-child(2) .phase-marker { background: rgba(251,191,36,0.15); color: var(--accent-amber); }
+    .phase-step:nth-child(3) .phase-marker { background: rgba(52,211,153,0.15); color: var(--accent-emerald); }
+
+    .phase-info h5 {
+      font-size: 0.88rem;
+      font-weight: 600;
+      margin-bottom: 0.25rem;
+    }
+
+    .phase-info p {
+      font-size: 0.82rem;
+      color: var(--text-muted);
+      line-height: 1.6;
+    }
+
+    .phase-info .phase-tag {
+      display: inline-block;
+      font-size: 0.72rem;
+      font-weight: 600;
+      font-family: var(--font-mono);
+      padding: 0.15rem 0.5rem;
+      border-radius: 4px;
+      margin-bottom: 0.3rem;
+    }
+
+    .phase-step:nth-child(1) .phase-tag { background: rgba(96,165,250,0.1); color: var(--accent-blue); }
+    .phase-step:nth-child(2) .phase-tag { background: rgba(251,191,36,0.1); color: var(--accent-amber); }
+    .phase-step:nth-child(3) .phase-tag { background: rgba(52,211,153,0.1); color: var(--accent-emerald); }
+
+    /* ═══════════════════════════════════════════════════════
+       TECH STACK
+       ═══════════════════════════════════════════════════════ */
+    .tech-grid {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 1rem;
+      margin-top: 3rem;
+    }
+
+    .tech-item {
+      background: var(--bg-card);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-md);
+      padding: 1.5rem;
+      text-align: center;
+      transition: all 0.3s ease;
+    }
+
+    .tech-item:hover {
+      border-color: rgba(96, 165, 250, 0.2);
+      transform: translateY(-2px);
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+    }
+
+    .tech-icon {
+      font-size: 2rem;
+      margin-bottom: 0.75rem;
+      display: block;
+    }
+
+    .tech-name {
+      font-size: 0.88rem;
+      font-weight: 600;
+      margin-bottom: 0.25rem;
+    }
+
+    .tech-role {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+    }
+
+    /* ═══════════════════════════════════════════════════════
+       PROJECT STRUCTURE
+       ═══════════════════════════════════════════════════════ */
+    .structure-block {
+      background: var(--bg-card);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-lg);
+      overflow: hidden;
+      margin-top: 3rem;
+      max-width: 700px;
+      margin-left: auto;
+      margin-right: auto;
+    }
+
+    .structure-header {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.85rem 1.25rem;
+      background: rgba(255, 255, 255, 0.02);
+      border-bottom: 1px solid var(--border-subtle);
+    }
+
+    .structure-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+    }
+
+    .structure-dot:nth-child(1) { background: #ff5f57; }
+    .structure-dot:nth-child(2) { background: #febc2e; }
+    .structure-dot:nth-child(3) { background: #28c840; }
+
+    .structure-title {
+      font-size: 0.78rem;
+      color: var(--text-muted);
+      font-family: var(--font-mono);
+      margin-left: 0.5rem;
+    }
+
+    .structure-code {
+      padding: 1.5rem;
+      font-family: var(--font-mono);
+      font-size: 0.82rem;
+      line-height: 1.9;
+      color: var(--text-secondary);
+      overflow-x: auto;
+    }
+
+    .structure-code .folder { color: var(--accent-blue); font-weight: 500; }
+    .structure-code .file { color: var(--text-secondary); }
+    .structure-code .comment { color: var(--text-muted); font-style: italic; }
+
+    /* ═══════════════════════════════════════════════════════
+       SETUP / GET STARTED
+       ═══════════════════════════════════════════════════════ */
+    .setup-section {
+      background: var(--bg-secondary);
+      border-top: 1px solid var(--border-subtle);
+      border-bottom: 1px solid var(--border-subtle);
+    }
+
+    .setup-steps {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 1.25rem;
+      margin-top: 3rem;
+    }
+
+    .setup-step {
+      background: var(--bg-card);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-lg);
+      padding: 1.75rem;
+      position: relative;
+    }
+
+    .step-number {
+      position: absolute;
+      top: 1.25rem;
+      right: 1.25rem;
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      background: rgba(96, 165, 250, 0.08);
+      color: var(--accent-blue);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.82rem;
+      font-weight: 700;
+      font-family: var(--font-mono);
+    }
+
+    .setup-step h4 {
+      font-size: 0.95rem;
+      font-weight: 600;
+      margin-bottom: 0.75rem;
+    }
+
+    .setup-step code {
+      display: block;
+      background: rgba(0, 0, 0, 0.4);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-sm);
+      padding: 0.75rem 1rem;
+      font-family: var(--font-mono);
+      font-size: 0.8rem;
+      color: var(--accent-cyan);
+      overflow-x: auto;
+      white-space: pre;
+    }
+
+    .setup-step p {
+      font-size: 0.85rem;
+      color: var(--text-secondary);
+      line-height: 1.7;
+    }
+
+    /* ═══════════════════════════════════════════════════════
+       CTA SECTION
+       ═══════════════════════════════════════════════════════ */
+    .cta-section {
+      text-align: center;
+      padding: 8rem 0;
+    }
+
+    .cta-box {
+      background: var(--gradient-card);
+      border: 1px solid var(--border-accent);
+      border-radius: var(--radius-xl);
+      padding: 4rem 3rem;
+      max-width: 700px;
+      margin: 0 auto;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .cta-box::before {
+      content: '';
+      position: absolute;
+      top: -50%;
+      left: -50%;
+      width: 200%;
+      height: 200%;
+      background: radial-gradient(circle at 30% 40%, rgba(96,165,250,0.06) 0%, transparent 50%),
+                  radial-gradient(circle at 70% 60%, rgba(167,139,250,0.04) 0%, transparent 50%);
+      pointer-events: none;
+    }
+
+    .cta-box > * { position: relative; z-index: 1; }
+
+    .cta-box h2 {
+      font-size: 1.8rem;
+      font-weight: 700;
+      margin-bottom: 1rem;
+    }
+
+    .cta-box p {
+      font-size: 1rem;
+      color: var(--text-secondary);
+      margin-bottom: 2rem;
+      max-width: 500px;
+      margin-left: auto;
+      margin-right: auto;
+    }
+
+    /* ═══════════════════════════════════════════════════════
+       DISCLAIMER
+       ═══════════════════════════════════════════════════════ */
+    .disclaimer {
+      background: rgba(251, 191, 36, 0.04);
+      border: 1px solid rgba(251, 191, 36, 0.12);
+      border-radius: var(--radius-md);
+      padding: 1.25rem 1.5rem;
+      max-width: 700px;
+      margin: 0 auto 4rem;
+    }
+
+    .disclaimer h4 {
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: var(--accent-amber);
+      margin-bottom: 0.5rem;
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+    }
+
+    .disclaimer p {
+      font-size: 0.82rem;
+      color: var(--text-muted);
+      line-height: 1.7;
+    }
+
+    /* ═══════════════════════════════════════════════════════
+       FOOTER
+       ═══════════════════════════════════════════════════════ */
+    footer {
+      border-top: 1px solid var(--border-subtle);
+      padding: 2.5rem 0;
+      text-align: center;
+    }
+
+    footer p {
+      font-size: 0.82rem;
+      color: var(--text-muted);
+    }
+
+    footer a {
+      color: var(--accent-blue);
+      text-decoration: none;
+    }
+
+    footer a:hover { text-decoration: underline; }
+
+    /* ═══════════════════════════════════════════════════════
+       SCROLL ANIMATIONS
+       ═══════════════════════════════════════════════════════ */
+    .reveal {
+      opacity: 0;
+      transform: translateY(30px);
+      transition: opacity 0.7s ease, transform 0.7s ease;
+    }
+
+    .reveal.visible {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    /* ═══════════════════════════════════════════════════════
+       RESPONSIVE
+       ═══════════════════════════════════════════════════════ */
+    @media (max-width: 1024px) {
+      .features-grid { grid-template-columns: repeat(2, 1fr); }
+      .tech-grid { grid-template-columns: repeat(3, 1fr); }
+      .arch-grid { grid-template-columns: 1fr; gap: 2rem; }
+    }
+
+    @media (max-width: 768px) {
+      .nav-links { display: none; }
+      .nav-links.open {
+        display: flex;
+        flex-direction: column;
+        position: absolute;
+        top: 100%;
+        left: 0;
+        right: 0;
+        background: rgba(6, 8, 12, 0.96);
+        backdrop-filter: blur(20px);
+        padding: 1rem;
+        border-bottom: 1px solid var(--border-subtle);
+      }
+      .nav-toggle { display: block; }
+      .features-grid { grid-template-columns: 1fr; }
+      .stats-bar { grid-template-columns: repeat(2, 1fr); }
+      .tech-grid { grid-template-columns: repeat(2, 1fr); }
+      .setup-steps { grid-template-columns: 1fr; }
+      section { padding: 4rem 0; }
+      .container { padding: 0 1.25rem; }
+      .cta-box { padding: 3rem 1.5rem; }
+    }
+
+    @media (max-width: 480px) {
+      .stats-bar { grid-template-columns: 1fr; }
+      .tech-grid { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- ═══════════════════════════════════════════════════════
+       NAVIGATION
+       ═══════════════════════════════════════════════════════ -->
+  <nav class="nav" id="navbar">
+    <div class="nav-inner">
+      <a href="#" class="nav-logo">
+        <span>🎓</span> StudyPlanner
+      </a>
+      <button class="nav-toggle" id="navToggle" aria-label="Toggle navigation">☰</button>
+      <ul class="nav-links" id="navLinks">
+        <li><a href="#features">Features</a></li>
+        <li><a href="#architecture">Architecture</a></li>
+        <li><a href="#tech-stack">Tech Stack</a></li>
+        <li><a href="#structure">Structure</a></li>
+        <li><a href="#setup">Setup</a></li>
+        <li><a href="https://github.com/Ramanpreet21/AI-Study_planner" class="nav-cta" target="_blank" rel="noopener">GitHub →</a></li>
+      </ul>
+    </div>
+  </nav>
+
+  <!-- ═══════════════════════════════════════════════════════
+       HERO SECTION
+       ═══════════════════════════════════════════════════════ -->
+  <section class="hero" id="hero">
+    <div class="hero-content">
+      <div class="hero-badge">
+        <span class="dot"></span>
+        Python · Streamlit · Hugging Face
+      </div>
+      <h1>
+        Smart Study Scheduling<br>
+        <span class="gradient-text">That Learns From You</span>
+      </h1>
+      <p class="hero-subtitle">
+        An adaptive AI planner that monitors mood, energy &amp; stress to generate optimised 
+        daily schedules — and adjusts when reality doesn't match the plan.
+      </p>
+      <div class="hero-actions">
+        <a href="https://github.com/Ramanpreet21/AI-Study_planner" class="btn btn-primary" target="_blank" rel="noopener">
+          ⬇ Clone Repository
+        </a>
+        <a href="#features" class="btn btn-ghost">
+          Explore Features ↓
+        </a>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════════════════════════════════════════════════
+       STATS BAR
+       ═══════════════════════════════════════════════════════ -->
+  <div class="container">
+    <div class="stats-bar reveal">
+      <div class="stat-item">
+        <div class="stat-number">6</div>
+        <div class="stat-label">Core Engines</div>
+      </div>
+      <div class="stat-item">
+        <div class="stat-number">7</div>
+        <div class="stat-label">Interactive Pages</div>
+      </div>
+      <div class="stat-item">
+        <div class="stat-number">4</div>
+        <div class="stat-label">Burnout Risk Levels</div>
+      </div>
+      <div class="stat-item">
+        <div class="stat-number">14d</div>
+        <div class="stat-label">Rolling Baseline</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════════
+       FEATURES SECTION
+       ═══════════════════════════════════════════════════════ -->
+  <section id="features">
+    <div class="container">
+      <div class="reveal">
+        <span class="section-label">Core Features</span>
+        <h2 class="section-title">Not Your Average Study Planner</h2>
+        <p class="section-desc">
+          Most planners assume you'll complete everything. This one monitors
+          what you actually do — and adapts.
+        </p>
+      </div>
+
+      <div class="features-grid">
+        <div class="feature-card reveal" style="--card-accent: linear-gradient(90deg, #60a5fa, #818cf8);">
+          <div class="feature-icon icon-blue">📋</div>
+          <h3>Adaptive Plan Generator</h3>
+          <p>
+            Generates daily schedules weighted by exam proximity and subject difficulty.
+            Applies an 80% buffer during cold start, then switches to data-driven caps.
+          </p>
+        </div>
+
+        <div class="feature-card reveal" style="--card-accent: linear-gradient(90deg, #fb7185, #f472b6);">
+          <div class="feature-icon icon-rose">🔥</div>
+          <h3>Burnout Detection</h3>
+          <p>
+            Composite Z-score model across stress, mood, energy, sleep &amp; task completion
+            — normalised against your personal 14-day rolling baseline.
+          </p>
+        </div>
+
+        <div class="feature-card reveal" style="--card-accent: linear-gradient(90deg, #22d3ee, #06b6d4);">
+          <div class="feature-icon icon-cyan">📊</div>
+          <h3>Reality Check Engine</h3>
+          <p>
+            Tracks 7-day rolling task completion and automatically caps requested hours
+            when the rate drops. Breaks the over-scheduling cycle.
+          </p>
+        </div>
+
+        <div class="feature-card reveal" style="--card-accent: linear-gradient(90deg, #a78bfa, #8b5cf6);">
+          <div class="feature-icon icon-violet">🔬</div>
+          <h3>Correlation Insights</h3>
+          <p>
+            Spearman rank correlation between behavioral signals and productivity. 
+            Surfaces patterns only when p&lt;0.10 with strictly observational language.
+          </p>
+        </div>
+
+        <div class="feature-card reveal" style="--card-accent: linear-gradient(90deg, #fbbf24, #f59e0b);">
+          <div class="feature-icon icon-amber">🚨</div>
+          <h3>Emergency Mode</h3>
+          <p>
+            One-click day cancellation with a 15-minute grounding protocol.
+            Auto-redistributes deferred tasks while respecting exam deadlines.
+          </p>
+        </div>
+
+        <div class="feature-card reveal" style="--card-accent: linear-gradient(90deg, #34d399, #10b981);">
+          <div class="feature-icon icon-emerald">🤖</div>
+          <h3>AI Assistant</h3>
+          <p>
+            Powered by flan-t5-base via Hugging Face. Generates natural language explanations
+            and AI-ranked subject prioritization advice.
+          </p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════════════════════════════════════════════════
+       ARCHITECTURE SECTION
+       ═══════════════════════════════════════════════════════ -->
+  <section class="arch-section" id="architecture">
+    <div class="container">
+      <div class="reveal">
+        <span class="section-label">Architecture</span>
+        <h2 class="section-title">Engineered for Honesty</h2>
+        <p class="section-desc">
+          Three core principles prevent the system from gaming itself.
+        </p>
+      </div>
+
+      <div class="arch-grid">
+        <div>
+          <div class="arch-principle reveal">
+            <h4>🔀 Feedback Loop Separation</h4>
+            <p>
+              Plan generation (Pipeline A) and performance evaluation (Pipeline B) are 
+              physically separated modules. The only bridge is a single hours-cap value 
+              passed through <code>feedback_splitter.py</code>. This prevents the system 
+              from generating progressively easier plans.
+            </p>
+          </div>
+
+          <div class="arch-principle reveal">
+            <h4>🧊 Cold Start Handling</h4>
+            <p>
+              A Phase Manager gates every adaptive feature behind data thresholds. No 
+              feature activates on empty data. The system is explicit about what it 
+              doesn't know yet.
+            </p>
+          </div>
+
+          <div class="arch-principle reveal">
+            <h4>🔎 Correlation Honesty</h4>
+            <p>
+              The insights engine is architecturally restricted from producing causal language. 
+              Every insight includes the correlation coefficient, p-value, sample size, and 
+              a mandatory confounder note.
+            </p>
+          </div>
+        </div>
+
+        <div class="phase-timeline reveal">
+          <h4>📅 Adaptive Phase Timeline</h4>
+          <div class="phase-step">
+            <div class="phase-marker">1–7</div>
+            <div class="phase-info">
+              <span class="phase-tag">COLD START</span>
+              <h5>Fixed 80% Buffer</h5>
+              <p>Conservative scheduling. No adaptive features active. System observes your baseline behaviour.</p>
+            </div>
+          </div>
+          <div class="phase-step">
+            <div class="phase-marker">8–14</div>
+            <div class="phase-info">
+              <span class="phase-tag">BOOTSTRAPPING</span>
+              <h5>Reality Check + Burnout Active</h5>
+              <p>Completion tracking and burnout scoring come online. Hours caps begin adjusting to real data.</p>
+            </div>
+          </div>
+          <div class="phase-step">
+            <div class="phase-marker">15+</div>
+            <div class="phase-info">
+              <span class="phase-tag">ADAPTIVE</span>
+              <h5>All Features Active</h5>
+              <p>Correlation insights, full burnout analysis, and AI-driven recommendations fully enabled.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════════════════════════════════════════════════
+       TECH STACK
+       ═══════════════════════════════════════════════════════ -->
+  <section id="tech-stack">
+    <div class="container">
+      <div class="reveal" style="text-align:center;">
+        <span class="section-label">Tech Stack</span>
+        <h2 class="section-title">Built With</h2>
+      </div>
+
+      <div class="tech-grid">
+        <div class="tech-item reveal">
+          <span class="tech-icon">🐍</span>
+          <div class="tech-name">Python</div>
+          <div class="tech-role">Backend</div>
+        </div>
+        <div class="tech-item reveal">
+          <span class="tech-icon">🌊</span>
+          <div class="tech-name">Streamlit</div>
+          <div class="tech-role">Frontend</div>
+        </div>
+        <div class="tech-item reveal">
+          <span class="tech-icon">🗄️</span>
+          <div class="tech-name">SQLite</div>
+          <div class="tech-role">Database</div>
+        </div>
+        <div class="tech-item reveal">
+          <span class="tech-icon">📈</span>
+          <div class="tech-name">Pandas · SciPy</div>
+          <div class="tech-role">Analysis</div>
+        </div>
+        <div class="tech-item reveal">
+          <span class="tech-icon">🤗</span>
+          <div class="tech-name">Hugging Face</div>
+          <div class="tech-role">AI (flan-t5)</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════════════════════════════════════════════════
+       PROJECT STRUCTURE
+       ═══════════════════════════════════════════════════════ -->
+  <section id="structure">
+    <div class="container">
+      <div class="reveal" style="text-align:center;">
+        <span class="section-label">Project Structure</span>
+        <h2 class="section-title">Clean Separation of Concerns</h2>
+        <p class="section-desc" style="margin:0 auto;">
+          Every module has a single responsibility. Pipelines A and B never share imports.
+        </p>
+      </div>
+
+      <div class="structure-block reveal">
+        <div class="structure-header">
+          <span class="structure-dot"></span>
+          <span class="structure-dot"></span>
+          <span class="structure-dot"></span>
+          <span class="structure-title">project-tree</span>
+        </div>
+        <pre class="structure-code"><span class="folder">study_planner/</span>
+├── app.py
+├── <span class="folder">pages/</span>
+│   ├── 1_daily_checkin.py
+│   ├── 2_study_plan.py
+│   ├── 3_end_of_the_day.py
+│   ├── 4_burnout_dashboard.py
+│   ├── 5_insights.py
+│   ├── 6_emergency.py
+│   └── 7_ai_assistant.py
+├── <span class="folder">engines/</span>
+│   ├── plan_generator.py       <span class="comment"># Pipeline A</span>
+│   ├── evaluator.py            <span class="comment"># Pipeline B</span>
+│   ├── burnout_scorer.py
+│   ├── insights_engine.py
+│   ├── phase_manager.py
+│   ├── feedback_splitter.py
+│   ├── task_redistributor.py
+│   ├── ai_engine.py
+│   └── ai_cache.py
+└── <span class="folder">database/</span>
+    ├── schema.sql
+    └── db_manager.py</pre>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════════════════════════════════════════════════
+       SETUP / GET STARTED
+       ═══════════════════════════════════════════════════════ -->
+  <section class="setup-section" id="setup">
+    <div class="container">
+      <div class="reveal">
+        <span class="section-label">Get Started</span>
+        <h2 class="section-title">Up and Running in 4 Steps</h2>
+        <p class="section-desc">
+          Clone, install, configure, and run. The database initialises automatically.
+        </p>
+      </div>
+
+      <div class="setup-steps">
+        <div class="setup-step reveal">
+          <span class="step-number">01</span>
+          <h4>Clone the Repository</h4>
+          <code>git clone https://github.com/Ramanpreet21/AI-Study_planner.git
+cd AI-Study_planner</code>
+        </div>
+
+        <div class="setup-step reveal">
+          <span class="step-number">02</span>
+          <h4>Install Dependencies</h4>
+          <code>pip install streamlit pandas scipy python-dotenv requests</code>
+        </div>
+
+        <div class="setup-step reveal">
+          <span class="step-number">03</span>
+          <h4>Add Hugging Face API Key</h4>
+          <p>Create <code style="display:inline; background:rgba(0,0,0,0.3); padding:0.1rem 0.4rem; border-radius:4px; border:none; color:var(--accent-cyan); white-space:normal;">api_key.env</code> in the project root with your token from <a href="https://huggingface.co/settings/tokens" target="_blank" rel="noopener" style="color:var(--accent-blue);">huggingface.co</a></p>
+        </div>
+
+        <div class="setup-step reveal">
+          <span class="step-number">04</span>
+          <h4>Launch the App</h4>
+          <code>streamlit run app.py</code>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════════════════════════════════════════════════
+       DISCLAIMER
+       ═══════════════════════════════════════════════════════ -->
+  <div class="container">
+    <div class="disclaimer reveal">
+      <h4>⚠ Important Notes</h4>
+      <p>
+        This system monitors study patterns only — it does not assess clinical need.
+        AI responses are generated by flan-t5-base and may be inaccurate.
+        If you are experiencing persistent distress, please contact a counsellor or support service.
+      </p>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════════
+       CTA SECTION
+       ═══════════════════════════════════════════════════════ -->
+  <section class="cta-section">
+    <div class="container">
+      <div class="cta-box reveal">
+        <h2>Ready to Study Smarter?</h2>
+        <p>
+          Stop over-scheduling. Start adapting. Your study plan should 
+          work with your energy — not against it.
+        </p>
+        <div class="hero-actions">
+          <a href="https://github.com/Ramanpreet21/AI-Study_planner" class="btn btn-primary" target="_blank" rel="noopener">
+            View on GitHub →
+          </a>
+          <a href="#setup" class="btn btn-ghost">
+            Quick Setup ↑
+          </a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════════════════════════════════════════════════
+       FOOTER
+       ═══════════════════════════════════════════════════════ -->
+  <footer>
+    <div class="container">
+      <p>
+        MIT License · Built by 
+        <a href="https://github.com/Ramanpreet21" target="_blank" rel="noopener">Ramanpreet21</a>
+      </p>
+    </div>
+  </footer>
+
+  <!-- ═══════════════════════════════════════════════════════
+       SCRIPTS
+       ═══════════════════════════════════════════════════════ -->
+  <script>
+    // ── Scroll reveal animation ──────────────────────────────
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach((entry, index) => {
+        if (entry.isIntersecting) {
+          // Stagger siblings for a cascade effect
+          const siblings = entry.target.parentElement.querySelectorAll('.reveal');
+          const siblingIndex = Array.from(siblings).indexOf(entry.target);
+          entry.target.style.transitionDelay = `${siblingIndex * 0.08}s`;
+          entry.target.classList.add('visible');
+          observer.unobserve(entry.target);
+        }
+      });
+    }, { threshold: 0.08, rootMargin: '0px 0px -40px 0px' });
+
+    document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
+
+    // ── Navbar scroll effect ──────────────────────────────
+    const navbar = document.getElementById('navbar');
+    let lastScroll = 0;
+
+    window.addEventListener('scroll', () => {
+      const currentScroll = window.scrollY;
+      navbar.classList.toggle('scrolled', currentScroll > 50);
+      lastScroll = currentScroll;
+    }, { passive: true });
+
+    // ── Mobile nav toggle ──────────────────────────────────
+    const navToggle = document.getElementById('navToggle');
+    const navLinks = document.getElementById('navLinks');
+
+    navToggle.addEventListener('click', () => {
+      navLinks.classList.toggle('open');
+      navToggle.textContent = navLinks.classList.contains('open') ? '✕' : '☰';
+    });
+
+    // Close mobile nav on link click
+    navLinks.querySelectorAll('a').forEach(link => {
+      link.addEventListener('click', () => {
+        navLinks.classList.remove('open');
+        navToggle.textContent = '☰';
+      });
+    });
+
+    // ── Smooth scroll for anchor links ──────────────────────
+    document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+      anchor.addEventListener('click', function(e) {
+        e.preventDefault();
+        const target = document.querySelector(this.getAttribute('href'));
+        if (target) {
+          target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+      });
+    });
+  </script>
+</body>
+</html>
