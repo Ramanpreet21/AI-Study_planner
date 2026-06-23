@@ -517,7 +517,7 @@ elif st.session_state.emergency_state == 'complete':
     if st.button("← Return to dashboard", use_container_width=False):
         for key in ['emergency_state', 'grounding_step', 'redistribution_result', 'reentry_chosen']:
             del st.session_state[key]
-        st.switch_page("pages/3_burnout_dashboard.py")
+        st.switch_page("pages/4_burnout_dashboard.py")
 
 # ── Disclaimer ─────────────────────────────────────────────────────────────────
 st.markdown("""
