@@ -33,14 +33,14 @@ def run_simulation():
 
         # 1. Insert Daily Logs (Behavioral Data)
         cursor.execute("""
-            INSERT INTO daily_logs (log_date, mood_score, energy_score, stress_score, sleep_hours)
+            INSERT OR REPLACE INTO daily_logs (log_date, mood_score, energy_score, stress_score, sleep_hours)
             VALUES (?, ?, ?, ?, ?)
         """, (log_date, mood, energy, stress, sleep))
 
         # 2. Insert Plans (Execution Data)
         subjects = json.dumps([{"name": "Cybersecurity", "difficulty": 8, "days_until_exam": i+5}])
         cursor.execute("""
-            INSERT INTO plans (plan_date, input_available_hours, input_subjects, 
+            INSERT OR REPLACE INTO plans (plan_date, input_available_hours, input_subjects, 
                                input_difficulty_avg, output_allocated_hours, 
                                output_completion_pct, phase_at_creation)
             VALUES (?, 6.0, ?, 8.0, 4.8, ?, 'bootstrapping')
